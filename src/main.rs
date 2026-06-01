@@ -16,56 +16,67 @@
 #![allow(unused_imports)]
 use std::os::unix::process::CommandExt;
 
-mod command {
-    struct Command {
-        pub cmd: String,
-        pub args: Vec<String>,
-    }
-
-    pub enum CommandType {
-        Builtin(Command),
-        External(Command),
-    }
-}
-
-mod app {
-    use std::io::Read;
-    use std::io::{self, Write};
-
-    pub struct ShellApp {
-        quit: bool,
-    }
-
-    impl ShellApp {
-        pub fn new() -> Self {
-            ShellApp { quit: false }
+mod modules {
+    pub mod command {
+        struct Command {
+            pub cmd: String,
+            pub args: Vec<String>,
         }
 
-        pub fn quit(&mut self) {
-            self.quit = true;
+        pub enum CommandType {
+            Builtin(Command),
+            External(Command),
+        }
+    }
+
+    pub mod app {
+        use std::io::Read;
+        use std::io::{self, Write};
+
+        pub struct ShellApp {
+            prompt: String,
+            quit: bool,
         }
 
-        pub fn run(&mut self) {
-            loop {
-                print!("$ ");
-                let _ = io::stdout().flush();
+        impl ShellApp {
+            pub fn new() -> Self {
+                ShellApp {
+                    prompt: "$ ".to_owned(),
+                    quit: false,
+                }
+            }
 
-                let mut command: String = String::new();
+            pub fn prompt(&mut self, p: &str) {
+                self.prompt = p.to_owned();
+            }
 
-                match io::stdin().read_line(&mut command) {
-                    Ok(bytes) => {
-                        let cmd = command.trim();
-                        println!("cmd: \"{}\" (bytes read: {bytes})", cmd);
+            pub fn quit(&mut self) {
+                self.quit = true;
+            }
 
-                        if cmd == "exit".to_owned() {
-                            self.quit();
+            pub fn run(&mut self) {
+                loop {
+                    print!("{}", self.prompt);
+                    let _ = io::stdout().flush();
+
+                    let mut command: String = String::new();
+
+                    match io::stdin().read_line(&mut command) {
+                        Ok(bytes) => {
+                            let cmd = command.trim();
+                            println!("cmd: \"{}\" (bytes read: {bytes})", cmd);
+
+                            if cmd == "exit".to_owned() {
+                                self.quit();
+                            }
                         }
-                    }
-                    Err(_) => println!("{command}: command not found"),
-                };
+                        Err(_) => println!("{command}: command not found"),
+                    };
 
-                if self.quit {
-                    break;
+                    // Quit ceremony
+                    if self.quit {
+                        break;
+                    }
                 }
             }
         }
@@ -73,7 +84,8 @@ mod app {
 }
 
 fn main() {
-    let mut app = app::ShellApp::new();
+    let mut app = modules::app::ShellApp::new();
+    //app.prompt("# ");
 
     app.run();
 }
