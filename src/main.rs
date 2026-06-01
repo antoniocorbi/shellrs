@@ -14,22 +14,66 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #![allow(unused_imports)]
-use std::io::Read;
-use std::io::{self, Write};
 use std::os::unix::process::CommandExt;
 
-fn main() -> std::io::Result<()> {
-    print!("$ ");
-    let _ = io::stdout().flush();
-
-    let mut command: String = String::new();
-
-    match io::stdin().read_line(&mut command) {
-        Ok(bytes) => {
-            println!("cmd: \"{}\" (bytes read: {bytes})", command.trim());
-        }
-        Err(_) => println!("{command}: command not found"),
+mod command {
+    struct Command {
+        pub cmd: String,
+        pub args: Vec<String>,
     }
 
-    Ok(())
+    pub enum CommandType {
+        Builtin(Command),
+        External(Command),
+    }
+}
+
+mod app {
+    use std::io::Read;
+    use std::io::{self, Write};
+
+    pub struct ShellApp {
+        quit: bool,
+    }
+
+    impl ShellApp {
+        pub fn new() -> Self {
+            ShellApp { quit: false }
+        }
+
+        pub fn quit(&mut self) {
+            self.quit = true;
+        }
+
+        pub fn run(&mut self) {
+            loop {
+                print!("$ ");
+                let _ = io::stdout().flush();
+
+                let mut command: String = String::new();
+
+                match io::stdin().read_line(&mut command) {
+                    Ok(bytes) => {
+                        let cmd = command.trim();
+                        println!("cmd: \"{}\" (bytes read: {bytes})", cmd);
+
+                        if cmd == "exit".to_owned() {
+                            self.quit();
+                        }
+                    }
+                    Err(_) => println!("{command}: command not found"),
+                };
+
+                if self.quit {
+                    break;
+                }
+            }
+        }
+    }
+}
+
+fn main() {
+    let mut app = app::ShellApp::new();
+
+    app.run();
 }
