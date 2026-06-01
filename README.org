@@ -1,0 +1,114 @@
+El desafío *"Build your own Shell"* (Construye tu propio Shell) de
+CodeCrafters está estructurado de manera progresiva.
+
+El objetivo es evolucionar un programa básico paso a paso hasta
+convertirlo en un intérprete de comandos funcional, partiendo desde un
+bucle REPL básico hasta gestionar redirecciones y autocompletado.
+
+La estructura se divide en *8 etapas principales*, seguidas de varias
+extensiones opcionales:
+
+* 1. El bucle REPL básico e inicio (Estructura base)
+
+  - Objetivo: Crear el esqueleto inicial. El shell debe imprimir un
+    prompt (como `$ `) y quedarse esperando la entrada del usuario
+    (`stdin`).
+
+  - Comandos iniciales: Implementar el manejo básico de comandos
+    desconocidos. Si el usuario escribe algo que no se reconoce, el
+    shell debe imprimir que el comando no se encontró (`command not
+    found`) y volver a mostrar el prompt.
+
+* 2. Comandos integrados (*Builtins*): `exit` y `echo`
+
+  - Objetivo: Diferenciar entre comandos internos del propio shell y
+    ejecutables del sistema.
+
+  - Manejo de `exit`: Implementar el comando integrado `exit 0` (o con
+    cualquier código de salida) para terminar la ejecución del
+    programa de forma limpia.
+
+  - Manejo de `echo`: Implementar el comando `echo`, que simplemente
+    debe imprimir los argumentos pasados por consola separados por
+    espacios.
+
+* 3. El comando integrado `type`
+
+  - Objetivo: Inspeccionar la naturaleza de los comandos.
+
+  - Comportamiento: Si el usuario ejecuta `type <comando>`, el shell
+    debe comprobar si es un *builtin* (como `exit` o `echo`) y
+    responder `<comando> is a shell builtin`. Si no lo es, deberá
+    buscarlo más adelante en el entorno.
+
+* 4. Ejecución de programas externos (Manejo del `$PATH`)
+
+  - Objetivo: Salir de los comandos internos y permitir al shell
+    ejecutar programas reales instalados en el sistema.
+
+  - Comportamiento: El shell debe leer la variable de entorno `$PATH`,
+    buscar si el comando introducido corresponde a un ejecutable real
+    en esos directorios (por ejemplo, `/usr/bin/cat` o `ls`) y clonar
+    el proceso para ejecutarlo mapeando correctamente la salida
+    estándar.
+
+  - Actualización de `type`: Modificar el comando `type` previo para
+    que, si el comando es externo pero existe en el `$PATH`, devuelva
+    su ruta absoluta (ej. `cat is /bin/cat`).
+
+* 5. Navegación por el sistema de archivos: `pwd` y `cd`
+
+  - Objetivo: Dotar al shell de estado e interactividad con el entorno
+    de directorios.
+
+  - Comando `pwd`: Debe imprimir el directorio de trabajo actual
+    (*Present Working Directory*).
+
+  - Comando `cd`: Debe permitir cambiar de directorio utilizando rutas
+    absolutas (ej. `cd /tmp`), rutas relativas (ej. `cd ..`) y el
+    atajo de la carpeta de inicio utilizando la tilde (`cd ~`).
+
+* 6. Manejo de comillas y caracteres de escape (*Quoting*)
+
+   - Objetivo: Robustecer el analizador léxico (*lexer/parser*) para
+     procesar argumentos complejos.
+
+   - Comportamiento: Implementar lógica para preservar espacios en
+     blanco o caracteres especiales cuando los argumentos van
+     envueltos en comillas simples (`'...'`) o comillas dobles
+     (`"..."`), además de procesar la barra invertida (`\`) como
+     carácter de escape.
+
+* 7. Redirección de flujos (`>`, `>>`, `2>`)
+
+   - Objetivo: Aprender a manipular los descriptores de archivo del
+     sistema operativo (`stdout` y `stderr`).
+
+   - Comportamiento:
+      - `>`: Redirigir la salida estándar a un archivo, sobrescribiendo su contenido.
+      - `>>`: Redirigir la salida estándar añadiendo (*append*) el contenido al final del archivo.
+      - `2>`: Redirigir específicamente el canal de errores estándar a un archivo.
+
+* 8. Modo Terminal Raw y Autocompletado (La tecla `Tab`)
+
+   - Objetivo: Interceptar las pulsaciones de teclas antes de que se
+     envíen al búfer de línea tradicional.
+
+   - Comportamiento: Cambiar la terminal a "modo raw" para capturar el
+     carácter `\t` (Tabulador). Al pulsarlo, el shell debe buscar
+     comandos coincidentes en los *builtins* y en el `$PATH` para
+     autocompletar el texto o mostrar las opciones disponibles si hay
+     múltiples coincidencias.
+
+
+* 9. Extensiones adicionales posteriores
+
+Una vez completadas las etapas principales que validan el núcleo del
+curso, la plataforma suele abrir retos adicionales para expandir las
+capacidades del shell, tales como:
+
+- Historial de comandos: Almacenar y navegar por los comandos
+  anteriores usando las flechas del teclado.
+
+- Tuberías (*Pipes* `|`): Conectar la salida estándar de un proceso
+  directamente con la entrada estándar de otro.
