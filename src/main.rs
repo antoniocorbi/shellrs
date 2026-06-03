@@ -17,21 +17,63 @@
 use std::os::unix::process::CommandExt;
 
 mod modules {
+
     pub mod command {
-        struct Command {
+        use std::{fmt, ops::RemAssign};
+
+        pub struct Command {
             pub cmd: String,
             pub args: Vec<String>,
+            pub output: String,
         }
 
         pub enum CommandType {
             Builtin(Command),
             External(Command),
         }
+
+        impl Command {
+            pub fn new(line: &str) -> Self {
+                let command = Command::parse(line);
+
+                command
+            }
+
+            fn parse(line: &str) -> Command {
+                let mut command = Command {
+                    cmd: "".to_owned(),
+                    args: vec![],
+                    output: "".to_owned(),
+                };
+
+                if line.len() != 0 {
+                    let mut split = line.split(' ');
+                    let cmd = match split.next() {
+                        Some(c) => c,
+                        None => "",
+                    }
+                    .to_string();
+
+                    let args = split.map(|s| s.to_owned()).collect();
+
+                    command.cmd = cmd;
+                    command.args = args;
+                }
+                command
+            }
+        }
+
+        impl fmt::Display for Command {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "Cmd:{} Args:{}", self.cmd, self.args.join(" "))
+            }
+        }
     }
 
     pub mod app {
         use std::io::Read;
         use std::io::{self, Write};
+        use std::process::Command;
 
         pub struct ShellApp {
             prompt: String,
@@ -63,10 +105,13 @@ mod modules {
 
                     match io::stdin().read_line(&mut command) {
                         Ok(bytes) => {
-                            let cmd = command.trim();
-                            println!("cmd: \"{}\" (bytes read: {bytes})", cmd);
+                            let cmdstr = command.trim();
+                            println!("cmd: \"{}\" (bytes read: {bytes})", cmdstr);
 
-                            if cmd == "exit".to_owned() {
+                            let cmd = crate::modules::command::Command::new(cmdstr);
+                            println!("{}", cmd);
+
+                            if cmdstr == "exit".to_owned() {
                                 self.quit();
                             }
                         }
