@@ -103,6 +103,18 @@ mod modules {
 
                     let mut command: String = String::new();
 
+                    // if let Ok(bytes) = io::stdin().read_line(&mut command) {
+                    //     let cmdstr = command.trim();
+                    //     println!("cmd: \"{}\" (bytes read: {bytes})", cmdstr);
+                    //
+                    //     let cmd = crate::modules::command::Command::new(cmdstr);
+                    //     println!("{}", cmd);
+                    //
+                    //     if cmdstr == "exit".to_owned() {
+                    //         self.quit();
+                    //     }
+                    // }
+
                     match io::stdin().read_line(&mut command) {
                         Ok(bytes) => {
                             let cmdstr = command.trim();
@@ -115,7 +127,7 @@ mod modules {
                                 self.quit();
                             }
                         }
-                        Err(_) => println!("{command}: command not found"),
+                        Err(_) => println!("{command}: Error reading command"),
                     };
 
                     // Quit ceremony
