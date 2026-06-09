@@ -27,19 +27,29 @@ mod modules {
             pub output: String,
         }
 
-        pub enum CommandType {
-            Builtin(Command),
-            External(Command),
+        trait BuiltIn {
+            fn run(&self);
+        }
+
+        impl BuiltIn for Command {
+            fn run(&self) {
+                match self.cmd.as_str() {
+                    "echo" => { /* lógica de echo */ }
+                    "cd" => { /* lógica de cd */ }
+                    "exit" => { /* lógica de exit */ }
+                    _ => println!("unknown builtin"),
+                }
+            }
         }
 
         impl Command {
-            pub fn new(line: &str) -> Self {
-                let command = Command::parse(line);
+            // pub fn new(line: &str) -> Self {
+            //     let command = Command::parse(line);
+            //
+            //     command
+            // }
 
-                command
-            }
-
-            fn parse(line: &str) -> Command {
+            pub fn parse(line: &str) -> Command {
                 let mut command = Command {
                     cmd: "".to_owned(),
                     args: vec![],
@@ -59,6 +69,7 @@ mod modules {
                     command.cmd = cmd;
                     command.args = args;
                 }
+
                 command
             }
         }
@@ -120,8 +131,7 @@ mod modules {
                             let cmdstr = command.trim();
                             println!("cmd: \"{}\" (bytes read: {bytes})", cmdstr);
 
-                            let cmd = crate::modules::command::Command::new(cmdstr);
-                            println!("{}", cmd);
+                            let command = crate::modules::command::Command::parse(cmdstr);
 
                             if cmdstr == "exit".to_owned() {
                                 self.quit();
