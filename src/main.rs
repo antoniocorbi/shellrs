@@ -21,36 +21,42 @@ mod modules {
     pub mod command {
         use std::{fmt, ops::RemAssign};
 
-        pub struct Command {
+        use crate::modules::app::ShellApp;
+
+        pub struct Command<'a> {
+            pub app: &'a mut ShellApp,
             pub cmd: String,
             pub args: Vec<String>,
             pub output: String,
         }
 
-        trait BuiltIn {
-            fn run(&self);
+        pub trait BuiltIn {
+            fn run(&mut self);
         }
 
-        impl BuiltIn for Command {
-            fn run(&self) {
+        impl BuiltIn for Command<'_> {
+            fn run(&mut self) {
                 match self.cmd.as_str() {
                     "echo" => { /* lógica de echo */ }
                     "cd" => { /* lógica de cd */ }
-                    "exit" => { /* lógica de exit */ }
+                    "exit" => {
+                        self.app.quit();
+                    }
                     _ => println!("unknown builtin"),
                 }
             }
         }
 
-        impl Command {
+        impl Command<'_> {
             // pub fn new(line: &str) -> Self {
             //     let command = Command::parse(line);
             //
             //     command
             // }
 
-            pub fn parse(line: &str) -> Command {
+            pub fn parse<'a>(line: &'a str, app: &'a mut ShellApp) -> Command<'a> {
                 let mut command = Command {
+                    app,
                     cmd: "".to_owned(),
                     args: vec![],
                     output: "".to_owned(),
@@ -74,7 +80,7 @@ mod modules {
             }
         }
 
-        impl fmt::Display for Command {
+        impl fmt::Display for Command<'_> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "Cmd:{} Args:{}", self.cmd, self.args.join(" "))
             }
@@ -82,9 +88,12 @@ mod modules {
     }
 
     pub mod app {
+        use crate::modules::command::Command;
         use std::io::Read;
         use std::io::{self, Write};
-        use std::process::Command;
+        //use std::process::Command;
+
+        use crate::modules::command::BuiltIn;
 
         pub struct ShellApp {
             prompt: String,
@@ -131,11 +140,12 @@ mod modules {
                             let cmdstr = command.trim();
                             println!("cmd: \"{}\" (bytes read: {bytes})", cmdstr);
 
-                            let command = crate::modules::command::Command::parse(cmdstr);
+                            let mut command = Command::parse(cmdstr, self);
+                            command.run();
 
-                            if cmdstr == "exit".to_owned() {
-                                self.quit();
-                            }
+                            // if cmdstr == "exit".to_owned() {
+                            //     self.quit();
+                            // }
                         }
                         Err(_) => println!("{command}: Error reading command"),
                     };
