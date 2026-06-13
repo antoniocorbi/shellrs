@@ -15,6 +15,7 @@
 
 #![allow(unused_imports)]
 use std::os::unix::process::CommandExt;
+use std::process::ExitCode;
 
 mod modules {
 
@@ -160,9 +161,11 @@ mod modules {
     }
 }
 
-fn main() {
+fn main() -> ExitCode {
     let mut app = modules::app::ShellApp::new();
     //app.prompt("# ");
 
     app.run();
+
+    ExitCode::SUCCESS
 }
