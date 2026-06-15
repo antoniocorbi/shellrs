@@ -20,6 +20,8 @@ use std::process::ExitCode;
 mod modules {
 
     pub mod command {
+        use std::env;
+        use std::path::Path;
         use std::{fmt, ops::RemAssign};
 
         use crate::modules::app::ShellApp;
@@ -39,7 +41,13 @@ mod modules {
             fn run(&mut self) {
                 match self.cmd.as_str() {
                     "echo" => { /* lógica de echo */ }
-                    "cd" => { /* lógica de cd */ }
+                    "cd" => {
+                        /* lógica de cd */
+                        self.handle_cd();
+                    }
+                    "pwd" => {
+                        self.handle_pwd();
+                    }
                     "exit" => {
                         self.app.quit();
                     }
@@ -78,6 +86,20 @@ mod modules {
                 }
 
                 command
+            }
+
+            fn handle_pwd(&self) {
+                if let Ok(path) = env::current_dir() {
+                    println!("{}", path.display());
+                }
+            }
+
+            fn handle_cd(&self) {
+                let root = Path::new(&self.args[0]);
+                // assert!(env::set_current_dir(&root).is_ok());
+                if env::set_current_dir(&root).is_ok() {
+                    println!("{}", root.display());
+                }
             }
         }
 
