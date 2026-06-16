@@ -95,10 +95,13 @@ mod modules {
             }
 
             fn handle_cd(&self) {
-                let root = Path::new(&self.args[0]);
-                // assert!(env::set_current_dir(&root).is_ok());
-                if env::set_current_dir(&root).is_ok() {
-                    println!("{}", root.display());
+                if let Some(dir) = self.args.first() {
+                    let root = Path::new(dir);
+                    if env::set_current_dir(root).is_err() {
+                        eprintln!("cd: {}: No such file or directory", dir);
+                    } else {
+                        println!("{}", root.display());
+                    }
                 }
             }
         }
