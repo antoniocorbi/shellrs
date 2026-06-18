@@ -40,7 +40,10 @@ mod modules {
         impl BuiltIn for Command<'_> {
             fn run(&mut self) {
                 match self.cmd.as_str() {
-                    "echo" => { /* lógica de echo */ }
+                    "echo" => {
+                        /* lógica de echo */
+                        self.handle_echo();
+                    }
                     "cd" => {
                         /* lógica de cd */
                         self.handle_cd();
@@ -102,6 +105,18 @@ mod modules {
                     } else {
                         println!("{}", root.display());
                     }
+                }
+            }
+
+            fn handle_echo(&self) {
+                if self.args.len() != 0 {
+                    let mut line: String = String::new();
+                    for a in &self.args {
+                        line = format!("{line} {a}");
+                    }
+                    println!("{line}");
+                } else {
+                    println!();
                 }
             }
         }
