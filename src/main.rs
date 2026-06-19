@@ -33,11 +33,11 @@ mod modules {
             pub output: String,
         }
 
-        pub trait BuiltIn {
+        pub trait CommandExt {
             fn run(&mut self);
         }
 
-        impl BuiltIn for Command<'_> {
+        impl CommandExt for Command<'_> {
             fn run(&mut self) {
                 match self.cmd.as_str() {
                     "echo" => {
@@ -134,7 +134,7 @@ mod modules {
         use std::io::{self, Write};
         //use std::process::Command;
 
-        use crate::modules::command::BuiltIn;
+        use crate::modules::command::CommandExt;
 
         pub struct ShellApp {
             prompt: String,
