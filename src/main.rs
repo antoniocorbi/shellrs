@@ -40,6 +40,7 @@ mod modules {
         impl CommandExt for Command<'_> {
             fn run(&mut self) {
                 match self.cmd.as_str() {
+                    // First check for built-ins
                     "echo" => {
                         /* lógica de echo */
                         self.handle_echo();
@@ -54,7 +55,10 @@ mod modules {
                     "exit" => {
                         self.app.quit();
                     }
-                    _ => println!("unknown builtin"),
+                    // Now external ones
+                    _ => {
+                        self.handle_external();
+                    }
                 }
             }
         }
@@ -119,6 +123,17 @@ mod modules {
                     println!();
                 }
             }
+
+            fn handle_external(&self) {
+                use std::process::Command;
+                if let Ok(output) = Command::new(&self.cmd).args(&self.args).output() {
+                    let s = unsafe { String::from_utf8_unchecked(output.stdout) };
+                    // dbg!(&self.cmd);
+                    // dbg!(&self.args);
+                    // println!("External Command: status: {}", output.status);
+                    println!("External Command: output: {s}");
+                }
+            }
         }
 
         impl fmt::Display for Command<'_> {
@@ -129,12 +144,8 @@ mod modules {
     }
 
     pub mod app {
-        use crate::modules::command::Command;
-        use std::io::Read;
-        use std::io::{self, Write};
-        //use std::process::Command;
-
-        use crate::modules::command::CommandExt;
+        use crate::modules::command::{Command, CommandExt};
+        use std::io::{self, Read, Write};
 
         pub struct ShellApp {
             prompt: String,
@@ -161,20 +172,7 @@ mod modules {
                 loop {
                     print!("{}", self.prompt);
                     let _ = io::stdout().flush();
-
                     let mut command: String = String::new();
-
-                    // if let Ok(bytes) = io::stdin().read_line(&mut command) {
-                    //     let cmdstr = command.trim();
-                    //     println!("cmd: \"{}\" (bytes read: {bytes})", cmdstr);
-                    //
-                    //     let cmd = crate::modules::command::Command::new(cmdstr);
-                    //     println!("{}", cmd);
-                    //
-                    //     if cmdstr == "exit".to_owned() {
-                    //         self.quit();
-                    //     }
-                    // }
 
                     match io::stdin().read_line(&mut command) {
                         Ok(bytes) => {
