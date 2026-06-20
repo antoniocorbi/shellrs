@@ -55,6 +55,9 @@ mod modules {
                     "exit" => {
                         self.app.quit();
                     }
+                    "version" => {
+                        ShellApp::version();
+                    }
                     // Now, external ones
                     _ => {
                         self.handle_external();
@@ -167,6 +170,8 @@ mod modules {
         use crate::modules::command::{Command, CommandExt};
         use std::io::{self, Read, Write};
 
+        const APP_VERSION: &str = "V0.1.0-󰀫";
+
         pub struct ShellApp {
             prompt: String,
             quit: bool,
@@ -178,6 +183,10 @@ mod modules {
                     prompt: "$ ".to_owned(),
                     quit: false,
                 }
+            }
+
+            pub fn version() {
+                println!("{}", APP_VERSION);
             }
 
             pub fn prompt(&mut self, p: &str) {
@@ -199,10 +208,10 @@ mod modules {
                     command.clear();
 
                     match io::stdin().read_line(&mut command) {
-                        // Ctrol-D
+                        // Ctrl-D
                         Ok(0) => {
-                            // Se detectó EOF (Ctrl-D / Ctrl-Z)
-                            println!("\n¡Ctrl-D! Bailing out...");
+                            // EOF detected (Ctrl-D / Ctrl-Z)
+                            println!("\nBailing out...");
                             self.quit();
                             //break;
                         }
