@@ -55,7 +55,7 @@ mod modules {
                     "exit" => {
                         self.app.quit();
                     }
-                    // Now external ones
+                    // Now, external ones
                     _ => {
                         self.handle_external();
                     }
@@ -125,14 +125,34 @@ mod modules {
             }
 
             fn handle_external(&self) {
+                use std::io::ErrorKind;
                 use std::process::Command;
-                if let Ok(output) = Command::new(&self.cmd).args(&self.args).output() {
-                    let s = unsafe { String::from_utf8_unchecked(output.stdout) };
-                    // dbg!(&self.cmd);
-                    // dbg!(&self.args);
-                    // println!("External Command: status: {}", output.status);
-                    println!("External Command: output: {s}");
+
+                let result = Command::new(&self.cmd).args(&self.args).output();
+
+                match result {
+                    Ok(output) => {
+                        let s = unsafe { String::from_utf8_unchecked(output.stdout) };
+                        if s.len() != 0 {
+                            println!("{s}");
+                        } else {
+                            println!();
+                        }
+                        // println!("El comando existía y se ejecutó.");
+                        // println!("¿Se ejecutó con éxito?: {}", status.success());
+                    }
+                    Err(ref e) if e.kind() == ErrorKind::NotFound => {
+                        eprintln!("Error: command not found");
+                    }
+                    Err(e) => {
+                        println!("I/O error: {}", e);
+                    }
                 }
+
+                // dbg!(&self.cmd);
+                // dbg!(&self.args);
+                // println!("External Command: output: {s}");
+                // println!("\nExternal Command: status: {}", output.status);
             }
         }
 
@@ -175,9 +195,16 @@ mod modules {
                     let mut command: String = String::new();
 
                     match io::stdin().read_line(&mut command) {
+                        // Ctrol-D
+                        Ok(0) => {
+                            // Se detectó EOF (Ctrl-D / Ctrl-Z)
+                            println!("\n¡Ctrl-D! Bailing out...");
+                            self.quit();
+                            //break;
+                        }
                         Ok(bytes) => {
                             let cmdstr = command.trim();
-                            println!("cmd: \"{}\" (bytes read: {bytes})", cmdstr);
+                            //println!("cmd: \"{}\" (bytes read: {bytes})", cmdstr);
 
                             let mut command = Command::parse(cmdstr, self);
                             command.run();
