@@ -189,10 +189,14 @@ mod modules {
             }
 
             pub fn run(&mut self) {
+                let mut command: String = String::new();
+
                 loop {
                     print!("{}", self.prompt);
-                    let _ = io::stdout().flush();
-                    let mut command: String = String::new();
+                    let _ = io::stdout().flush().unwrap();
+
+                    // Clean the buffer
+                    command.clear();
 
                     match io::stdin().read_line(&mut command) {
                         // Ctrol-D
