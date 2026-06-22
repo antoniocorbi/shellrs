@@ -20,11 +20,10 @@ use std::process::ExitCode;
 mod modules {
 
     pub mod command {
+        use crate::modules::app::ShellApp;
         use std::env;
         use std::path::Path;
         use std::{fmt, ops::RemAssign};
-
-        use crate::modules::app::ShellApp;
 
         pub struct Command<'a> {
             pub app: &'a mut ShellApp,
@@ -115,19 +114,20 @@ mod modules {
                 }
             }
 
-            fn handle_echo(&self) {
+            fn handle_echo(&mut self) {
                 if self.args.len() != 0 {
                     let mut line: String = String::new();
                     for a in &self.args {
                         line = format!("{line} {a}");
                     }
-                    println!("{line}");
+                    self.output = line.trim().to_owned();
+                    println!("[{}]", self.output);
                 } else {
                     println!();
                 }
             }
 
-            fn handle_external(&self) {
+            fn handle_external(&mut self) {
                 use std::io::ErrorKind;
                 use std::process::Command;
 
@@ -136,8 +136,10 @@ mod modules {
                 match result {
                     Ok(output) => {
                         let s = unsafe { String::from_utf8_unchecked(output.stdout) };
-                        if s.len() != 0 {
-                            println!("{s}");
+                        self.output = s;
+
+                        if self.output.len() != 0 {
+                            println!("{}", self.output);
                         } else {
                             println!();
                         }
