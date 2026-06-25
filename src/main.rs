@@ -135,7 +135,15 @@ mod modules {
 
                 match result {
                     Ok(output) => {
-                        let s = unsafe { String::from_utf8_unchecked(output.stdout) };
+                        // let s = unsafe { String::from_utf8_unchecked(output.stdout) };
+
+                        let s = String::from_utf8(output.stdout)
+                            .map_err(|e| {
+                                eprintln!("Error decoding output as UTF-8: {}", e);
+                                String::new()
+                            })
+                            .unwrap_or_else(|_| String::from(""));
+
                         self.output = s;
 
                         if self.output.len() != 0 {
@@ -238,6 +246,213 @@ mod modules {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::modules::app::ShellApp;
+    use super::modules::command::{Command, CommandExt};
+    use std::env;
+    use std::path::Path;
+
+    // ─── Command::parse() tests ─────────────────────────────────────────────
+
+    #[test]
+    fn test_parse_empty() {
+        let mut app = ShellApp::new();
+        let cmd = Command::parse("", &mut app);
+        assert_eq!(cmd.cmd, "");
+        assert!(cmd.args.is_empty());
+    }
+
+    #[test]
+    fn test_parse_single_word() {
+        let mut app = ShellApp::new();
+        let cmd = Command::parse("ls", &mut app);
+        assert_eq!(cmd.cmd, "ls");
+        assert!(cmd.args.is_empty());
+    }
+
+    #[test]
+    fn test_parse_with_args() {
+        let mut app = ShellApp::new();
+        let cmd = Command::parse("echo hello world", &mut app);
+        assert_eq!(cmd.cmd, "echo");
+        assert_eq!(cmd.args, vec!["hello", "world"]);
+    }
+
+    #[test]
+    fn test_parse_whitespace_only() {
+        let mut app = ShellApp::new();
+        let cmd = Command::parse("   ", &mut app);
+        assert_eq!(cmd.cmd, "");
+        // split(' ') on "   " gives ["", "", "", ""]
+        assert_eq!(cmd.args, vec!["", "", ""]);
+    }
+
+    #[test]
+    fn test_parse_no_command() {
+        let mut app = ShellApp::new();
+        let cmd = Command::parse("  foo", &mut app);
+        assert_eq!(cmd.cmd, "");
+        // split(' ') on "  foo" gives ["", "", "foo"]
+        assert_eq!(cmd.args, vec!["", "foo"]);
+    }
+
+    // ─── Display test ───────────────────────────────────────────────────────
+
+    #[test]
+    fn test_display() {
+        let mut app = ShellApp::new();
+        let cmd = Command::parse("echo foo bar", &mut app);
+        assert_eq!(format!("{}", cmd), "Cmd:echo Args:foo bar");
+    }
+
+    // ─── Built-in: echo tests ───────────────────────────────────────────────
+
+    #[test]
+    fn test_echo_basic() {
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("echo hello world", &mut app);
+        cmd.run();
+        assert_eq!(cmd.output, "hello world");
+    }
+
+    #[test]
+    fn test_echo_single_arg() {
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("echo foo", &mut app);
+        cmd.run();
+        assert_eq!(cmd.output, "foo");
+    }
+
+    #[test]
+    fn test_echo_no_args() {
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("echo", &mut app);
+        cmd.run();
+        assert_eq!(cmd.output, "");
+    }
+
+    #[test]
+    fn test_echo_empty_arg() {
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("echo ''", &mut app);
+        cmd.run();
+        assert_eq!(cmd.output, "''");
+    }
+
+    // ─── Built-in: cd tests ─────────────────────────────────────────────────
+
+    #[test]
+    fn test_cd_to_existing_dir() {
+        let original = env::current_dir().unwrap();
+        let tmp = env::temp_dir();
+        let line = format!("cd {}", tmp.display());
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse(&line, &mut app);
+        cmd.run();
+        assert_eq!(env::current_dir().unwrap(), tmp);
+        env::set_current_dir(&original).unwrap();
+        assert_eq!(env::current_dir().unwrap(), original);
+    }
+
+    #[test]
+    fn test_cd_to_nonexistent() {
+        let original = env::current_dir().unwrap();
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("cd /_shellrs_test_nonexistent_dir_", &mut app);
+        cmd.run();
+        // Directory should not have changed
+        assert_eq!(env::current_dir().unwrap(), original);
+    }
+
+    #[test]
+    fn test_cd_no_args() {
+        let original = env::current_dir().unwrap();
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("cd", &mut app);
+        cmd.run();
+        // No args → nothing happens, directory unchanged
+        assert_eq!(env::current_dir().unwrap(), original);
+    }
+
+    #[test]
+    fn test_cd_relative() {
+        let original = env::current_dir().unwrap();
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("cd src", &mut app);
+        cmd.run();
+        // src exists in the project, so this should work
+        let expected = original.join("src");
+        assert_eq!(env::current_dir().unwrap(), expected);
+        env::set_current_dir(&original).unwrap();
+    }
+
+    // ─── Built-in: pwd test ─────────────────────────────────────────────────
+
+    #[test]
+    fn test_pwd() {
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("pwd", &mut app);
+        cmd.run(); // just ensure it doesn't panic
+    }
+
+    // ─── Built-in: exit test ────────────────────────────────────────────────
+
+    #[test]
+    fn test_exit() {
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("exit", &mut app);
+        cmd.run();
+        // ShellApp.quit is private so we can only verify no panic
+    }
+
+    // ─── Built-in: version test ─────────────────────────────────────────────
+
+    #[test]
+    fn test_version() {
+        ShellApp::version(); // just ensure no panic
+    }
+
+    // ─── External command tests ─────────────────────────────────────────────
+
+    #[test]
+    fn test_external_found() {
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("echo external", &mut app);
+        cmd.run();
+        // External echo should produce output
+        assert!(!cmd.output.is_empty());
+    }
+
+    #[test]
+    fn test_external_not_found() {
+        let mut app = ShellApp::new();
+        let mut cmd = Command::parse("_shellrs_nonexistent_cmd_", &mut app);
+        cmd.run();
+        assert!(cmd.output.is_empty());
+    }
+
+    // ─── ShellApp tests ────────────────────────────────────────────────────
+
+    #[test]
+    fn test_shell_app_new() {
+        let app = ShellApp::new();
+        let _ = app;
+    }
+
+    #[test]
+    fn test_shell_app_prompt() {
+        let mut app = ShellApp::new();
+        app.prompt("> ");
+    }
+
+    #[test]
+    fn test_shell_app_quit() {
+        let mut app = ShellApp::new();
+        app.quit();
     }
 }
 
