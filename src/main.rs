@@ -72,6 +72,10 @@ mod modules {
             //     command
             // }
 
+            pub fn nargs(&self) -> usize {
+                self.args.len()
+            }
+
             pub fn parse<'a>(line: &'a str, app: &'a mut ShellApp) -> Command<'a> {
                 let mut command = Command {
                     app,
@@ -115,7 +119,7 @@ mod modules {
             }
 
             fn handle_echo(&mut self) {
-                if self.args.len() != 0 {
+                if self.nargs() != 0 {
                     let mut line: String = String::new();
                     for a in &self.args {
                         line = format!("{line} {a}");
@@ -133,8 +137,12 @@ mod modules {
 
                 let result = Command::new(&self.cmd).args(&self.args).output();
 
+                dbg!(&self.args);
+
                 match result {
                     Ok(output) => {
+                        dbg!(&output);
+
                         // let s = unsafe { String::from_utf8_unchecked(output.stdout) };
 
                         let s = String::from_utf8(output.stdout)
