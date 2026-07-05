@@ -29,17 +29,22 @@ system-info:
 @sloc:
     tokei
 
+# Cargo check
 c:
     cargo c
 
+# Cargo buid
 b:
     cargo b
 
+# Cargo buid debug
 bd:
     cargo b --features debug
 
+# Cargo run
 r:
     cargo r
 
+# Cargo run debug
 rd:
     cargo r --features debug
