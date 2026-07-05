@@ -3,4 +3,8 @@ name = "shellrs"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+# "default" es opcional, si quieres que esté desactivado por defecto
+debug = []
+
 [dependencies]

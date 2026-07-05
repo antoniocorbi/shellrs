@@ -118,7 +118,8 @@ mod modules {
                 }
             }
 
-            fn handle_echo(&mut self) {
+            #[deprecated(since = "1.0.0", note = "please use `handle_echo` instead")]
+            fn old_handle_echo(&mut self) {
                 if self.nargs() != 0 {
                     let mut line: String = String::new();
                     for a in &self.args {
@@ -129,6 +130,17 @@ mod modules {
                 } else {
                     println!();
                 }
+            }
+
+            fn handle_echo(&mut self) {
+                if self.args.is_empty() {
+                    println!();
+                    return;
+                }
+
+                // Use join() to handle separators efficiently
+                self.output = self.args.join(" ");
+                println!("[{}]", self.output);
             }
 
             fn handle_external(&mut self) {
@@ -233,9 +245,19 @@ mod modules {
                             self.quit();
                             //break;
                         }
-                        Ok(bytes) => {
+                        Ok(_bytes) => {
                             let cmdstr = command.trim();
                             //println!("cmd: \"{}\" (bytes read: {bytes})", cmdstr);
+
+                            #[cfg(feature = "debug")]
+                            for c in cmdstr.chars() {
+                                match c {
+                                    '\x03' => println!("Se presionó C-c"),
+                                    '\x04' => println!("Se presionó C-d"),
+                                    '\x1e' => println!("Se presionó C-z"),
+                                    _ => println!("Otra tecla: {}", c),
+                                }
+                            }
 
                             let mut command = Command::parse(cmdstr, self);
                             command.run();
