@@ -146,14 +146,28 @@ mod modules {
             fn handle_external(&mut self) {
                 use std::io::ErrorKind;
                 use std::process::Command;
+                let cmd = "/etc/profiles/per-user/acorbi/bin/sh";
+                let mut args = String::new();
 
-                let result = Command::new(&self.cmd).args(&self.args).output();
+                for s in &self.args {
+                    args += &format!("{} ", &s);
+                }
+                let args = format!("{} {}", &self.cmd, args.trim());
+                //dbg!(&args);
 
-                dbg!(&self.args);
+                //dbg!(cmd);
+                //dbg!(&args);
+                //let args: Vec<_> = args.split(" ").filter(|e| !e.is_empty()).collect();
+                let args = ["-c", &args];
+                //dbg!(&args);
+
+                let result = Command::new(cmd).args(args).output();
+
+                // dbg!(&self.args);
 
                 match result {
                     Ok(output) => {
-                        dbg!(&output);
+                        // dbg!(&output);
 
                         // let s = unsafe { String::from_utf8_unchecked(output.stdout) };
 
