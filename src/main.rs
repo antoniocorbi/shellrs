@@ -34,6 +34,7 @@ mod modules {
 
         pub trait CommandExt {
             fn run(&mut self);
+            fn is_builtin(&self) -> bool;
         }
 
         impl CommandExt for Command<'_> {
@@ -54,6 +55,9 @@ mod modules {
                     "exit" => {
                         self.app.quit();
                     }
+                    "type" => {
+                        self.handle_type();
+                    }
                     "version" => {
                         ShellApp::version();
                     }
@@ -61,6 +65,17 @@ mod modules {
                     _ => {
                         self.handle_external();
                     }
+                }
+            }
+
+            fn is_builtin(&self) -> bool {
+                if self.nargs() > 0 {
+                    match self.args[0].as_str() {
+                        "echo" | "cd" | "pwd" | "exit" | "version" | "type" => true,
+                        _ => false,
+                    }
+                } else {
+                    false
                 }
             }
         }
@@ -99,6 +114,14 @@ mod modules {
                 }
 
                 command
+            }
+
+            fn handle_type(&self) {
+                if self.is_builtin() {
+                    println!("{} is a shell builtin.", self.args[0])
+                } else {
+                    println!("{} is not a shell builtin.", self.args[0])
+                }
             }
 
             fn handle_pwd(&self) {
