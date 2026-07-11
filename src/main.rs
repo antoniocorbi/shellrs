@@ -30,6 +30,7 @@ mod modules {
             pub cmd: String,
             pub args: Vec<String>,
             pub output: String,
+            pub is_builtin: bool,
         }
 
         pub trait CommandExt {
@@ -68,15 +69,19 @@ mod modules {
                 }
             }
 
+            // fn is_builtin(&self) -> bool {
+            //     if self.nargs() > 0 {
+            //         match self.args[0].as_str() {
+            //             "echo" | "cd" | "pwd" | "exit" | "version" | "type" => true,
+            //             _ => false,
+            //         }
+            //     } else {
+            //         false
+            //     }
+            // }
+
             fn is_builtin(&self) -> bool {
-                if self.nargs() > 0 {
-                    match self.args[0].as_str() {
-                        "echo" | "cd" | "pwd" | "exit" | "version" | "type" => true,
-                        _ => false,
-                    }
-                } else {
-                    false
-                }
+                self.is_builtin
             }
         }
 
@@ -86,6 +91,13 @@ mod modules {
             //
             //     command
             // }
+
+            pub fn check_builtin(cmd: &str) -> bool {
+                match cmd {
+                    "echo" | "cd" | "pwd" | "exit" | "version" | "type" => true,
+                    _ => false,
+                }
+            }
 
             pub fn nargs(&self) -> usize {
                 self.args.len()
@@ -97,6 +109,7 @@ mod modules {
                     cmd: "".to_owned(),
                     args: vec![],
                     output: "".to_owned(),
+                    is_builtin: false,
                 };
 
                 if line.len() != 0 {
@@ -107,10 +120,12 @@ mod modules {
                     }
                     .to_string();
 
-                    let args = split.map(|s| s.to_owned()).collect();
+                    let args: Vec<_> = split.map(|s| s.to_owned()).collect();
+                    let is_builtin = Command::check_builtin(&args[0]);
 
                     command.cmd = cmd;
                     command.args = args;
+                    command.is_builtin = is_builtin;
                 }
 
                 command
