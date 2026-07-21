@@ -26,11 +26,11 @@ mod modules {
         use std::{fmt, ops::RemAssign};
 
         pub struct Command<'a> {
-            pub app: &'a mut ShellApp,
+            app: &'a mut ShellApp,
             pub cmd: String,
             pub args: Vec<String>,
             pub output: String,
-            pub is_builtin: bool,
+            is_builtin: bool,
         }
 
         pub trait CommandExt {
@@ -121,7 +121,8 @@ mod modules {
                     .to_string();
 
                     let args: Vec<_> = split.map(|s| s.to_owned()).collect();
-                    let is_builtin = Command::check_builtin(&args[0]);
+                    //dbg!(&args);
+                    let is_builtin = Command::check_builtin(&cmd);
 
                     command.cmd = cmd;
                     command.args = args;
@@ -538,10 +539,17 @@ mod tests {
     }
 }
 
+fn environment() {
+    let path = std::env::var("PATH").expect("Problem getting ENV PATH");
+
+    println!("PATH = [{}]", path);
+}
+
 fn main() -> ExitCode {
     let mut app = modules::app::ShellApp::new();
     //app.prompt("# ");
 
+    environment();
     app.run();
 
     ExitCode::SUCCESS
