@@ -215,7 +215,8 @@ mod modules {
                                 eprintln!("Error decoding output as UTF-8: {}", e);
                                 String::new()
                             })
-                            .unwrap_or_else(|_| String::from(""));
+                            .unwrap_or(String::from(""));
+                        // .unwrap_or_else(|_| String::from(""));
 
                         self.output = s;
 
